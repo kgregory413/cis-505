@@ -102,6 +102,115 @@ public class GregoryGradeBookApp extends Application {
 
     }
 
+    btnClear.setOnAction(ev -> clearForm());
+        btnSave.setOnAction(ev -> {
+            try {
+                saveToFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        btnView.setOnAction(ev -> {
+            try {
+                viewFile(stack);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        btnReturn.setOnAction(ev -> flipStacks(stack));
+    }
+
+    private void clearForm() {
+        txtName.setText("");
+        txtSurname.setText("");
+        txtCourse.setText("");
+        cboGrade.setValue("");
+        lblSaveNotif.setText("");
+    }
+
+    private void saveToFile() throws IOException {
+        if(!txtName.getText().isEmpty() && !txtSurname.getText().isEmpty() && !txtCourse.getText().isEmpty() && !cboGrade.getSelectionModel().isEmpty()) { // Check that all fields are filled
+            String name = txtName.getText();
+            String surname = txtSurname.getText();
+            String newLine = "\n" + name + "," + surname + "," + txtCourse.getText() + "," + cboGrade.getValue();
+            if(file.length() != 0) {
+                try (
+                    FileWriter writer = new FileWriter(file, true);
+                ) {
+                    writer.write(newLine);
+                    writer.close();
+
+                    clearForm();
+                    lblSaveNotif.setText("Grade book file for " + name + " " + surname + " was successfully saved!");
+                }
+            } else {
+                file.createNewFile();
+                try (
+                    FileWriter writer = new FileWriter(file, true);
+                ) {
+                    writer.write("First Name,Last Name,Course Number,Course Name,Grade" + newLine);
+                    writer.close();
+
+                    clearForm();
+                    lblSaveNotif.setText("New grade book successfully submitted!");
+                }
+            }
+        } else {
+            alert.setContentText("All fields are required. Please complete the form and try again.");
+            alert.show();
+        }
+
+    }
+
+    private void viewFile(StackPane stack) throws IOException {
+        if(file.exists()) {
+            ArrayList<Student> students = getStudents();
+            String results = "";
+            for(int i=0; i<students.size(); i++) {
+                results += students.get(i) + "\n";
+            }
+            txtResults.setText(results);
+            flipStacks(stack);
+            clearForm();
+        } else {
+            alert.setContentText("File not found.");
+            alert.show();
+        }
+    }
+
+    private ArrayList<Student> getStudents() throws IOException {
+        String line;
+        FileReader reader = new FileReader(file);
+        BufferedReader br = new BufferedReader(reader);
+        ArrayList<Student> studentArray = new ArrayList<Student>();
+        String[] lineArray;
+
+        br.readLine();
+
+        while((line = br.readLine()) != null) {
+            lineArray = line.split(",");
+            Student tempStudent = new Student(lineArray[0], lineArray[1], lineArray[2], lineArray[3]);
+            studentArray.add(tempStudent);
+        }
+
+        br.close();
+
+        return studentArray;
+    }
+
+    private void flipStacks(StackPane stack) {
+        ObservableList<Node> panes = stack.getChildren();
+
+        if(panes.size() > 1) {
+            Node topPane = panes.get(panes.size()-1);
+            topPane.toBack();
+        }
+    }
+    
+    public static void main(String[] args) {
+        Application.launch(args);
+    }
+
     public static void main(String[] args) {
         Application.launch(args);
     }
